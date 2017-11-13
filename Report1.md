@@ -7,6 +7,21 @@ Report 1
 
 ### LoRaWAN Specification
 
+#### Class A
+
+LoRaWAN은 Class A, B, C로 구성되어 있다.
+이때 Class A는 모든 LoRaWAN device들이 구현해야 하는 기본적 클래스이다.
+기본적으로 Physical Message Format 및 MAC Message Format이 정의되어 있으며,
+이에 따른 MAC 명령어 종류와 End-Device 활성화 방법이 명시되어 있다.
+이때 본 과제에서는 Over-the-Air Activaction(OTAA) 방식으로 End device를 활성화해야 한다.
+
+#### Transmission parameters
+
+
+#### OTAA join procedure
+
+
+
 ### Source Code
 
 ## Project Plan
