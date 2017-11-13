@@ -63,3 +63,9 @@ Improving LoRaWan
   * Other nodes enter into sleep mode until the next beacon
 
 ## Specification
+
+1. End Node implementation
+    * Modify Class A
+1. Network Server implementation
+1. Gateway implementation
+    * Packet Forwarder & Driver/HAL
