@@ -16,7 +16,7 @@ Report 1
 #### `LoRaMacInitialization`
 
 아래 그래프는 해당 함수의 Call graph이다.
-[](images/callgraphs/LoRaMacInitialization.png)
+![](images/callgraphs/LoRaMacInitialization.png)
 
 몇 가지 `On...`함수들을 참조하고 있는데, 이들을 핸들러로 등록하는 역할을 한다.
 즉, `RX1`, `RX2` 등이 끝났을 때 작동을 수정하고 싶다면 해당하는 `OnRadioRxDone`등을 수정하면 된다.
