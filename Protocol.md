@@ -4,9 +4,8 @@ Protocol
 ## Beacon Frame
 
 * Type: beacon
-* Cycle Length(ms)
-* Beacon cycle length
-* ID List
+* Beacon Cycle Length(ms)
+* Target ID List
 
 ## Join Senario
 
