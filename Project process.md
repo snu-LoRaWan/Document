@@ -35,8 +35,17 @@ main.c 코드에서는 while문 안에서 `lora_fsm()` 함수를 통해서 상�
 
 ## Server
 
-## Server
+### Code Struct 분석
 
+`https://github.com/gotthardp/lorawan-server/blob/master/doc/Development.md` 문서를 참고해서 확인한 결과, gateway로부터 들어온 packet들은 udp link를 통해 `lorawan_gw_forwarder.erl` 파일(프로세스)에서 처리하고 있다.
 
+이 파일에서 패킷을 받은 후, gateway protocol(`https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT`)에 맞춰 `lorawan_gw_router.erl`의 함수로 넘겨준다.
+
+`lorawan_gw_router.erl`에서는 self-async message를 보냄으로써 위의 요청들을 async하게 처리하기 시작한다.
+
+Downlink의 경우, `lorawan_gw_router.erl`에서의 downlink request에서 시작된다.
 
 ### Remains
+
+* `lorawan_gw_router.erl`의 downlink를 누가 invoke하는 지 찾기 (worker쪽 코드 추가 조사)
+* 서버 비콘을 어디에 정의하면 되고, 스케쥴링은 어떻게 하면 될 지 찾아보기
