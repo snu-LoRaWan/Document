@@ -79,3 +79,13 @@ timer:send_after(BTInterval, {beacon_transmit, Trid})
 요약하자면 Beacon이 보내진 지 1초 후, 비콘 재전송과는 관계 없이 async하게 해당 파일의 `handle_info({beacon_transmit, Trid}, State)`함수가 호출되게 된다.
 해당 함수에서는 transmit를 하고 `txframes` table에서 해당 frame을 pop한다.
 data 전송은 `lorawan_handler:downlink/3`함수를 이용했다.
+
+`BInterval`은 Beacon 주기에 영향을 미치지 않는다. 즉, beacon은 계속 3초에 한 번 전송되고, 필요한 경우에 beacon 전송 1초 후에 데이터가 전송된다.
+
+### Verify
+
+Packet Forwarder단에서 패킷이 Gateway로 잘 들어가는지 확인하였다.
+
+![](images/final/packet_forwarder.jpg)
+위의 사진을 보면 크게 두 가지의 downlink packet이 존재함을 확인할 수 있는데, size가 작은 것이 beacon이다.
+Size가 큰 것은 dummy data로, 1초마다 client에 전송되었다. 이 dummy data는, `src/lorawan_gw_router.erl`에서 직접 생성하여 `lorawan_handler:store_frame/2`를 직접 호출하여 전송시켰다.
