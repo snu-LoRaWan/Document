@@ -89,6 +89,7 @@ Packet Forwarder단에서 패킷이 Gateway로 잘 들어가는지 확인하였�
 ![](images/final/packet_forwarder.jpg)
 위의 사진을 보면 크게 두 가지의 downlink packet이 존재함을 확인할 수 있는데, size가 작은 것이 beacon이다.
 Size가 큰 것은 dummy data로, 1초마다 client에 전송되었다. 이 dummy data는, `src/lorawan_gw_router.erl`에서 직접 생성하여 `lorawan_handler:store_frame/2`를 직접 호출하여 전송시켰다.
+
 ---
 
 ## Client Implementation
