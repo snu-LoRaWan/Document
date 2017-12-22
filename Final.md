@@ -1,6 +1,6 @@
 Final Report
 ---
-
+> 박상혁, 노윤미
 
 
 ## Protocol
@@ -62,7 +62,7 @@ Downlink data, Beacon frame 모두 921.9MHz, Datarate "SF12BW125", Coding Rate "
 timer:send_after(BInterval, beacon)
 ```
 
-`BInterval`의 값은 3000이다. 이 시간 이후 `beacon` signal이 자기 자신에게 돌아오면서, `handle_info(beacon, State)를 호출한다. 이제 그 함수에서 beacon frame을 전송하면 될 것이다.
+`BInterval`의 값은 3000이다. 이 시간 이후 `beacon` signal이 자기 자신에게 돌아오면서, `handle_info(beacon, State)`를 호출한다. 이제 그 함수에서 beacon frame을 전송하면 될 것이다.
 
 `handle_info(beacon, State)`는 erlang database인 `mnesia`의 `gateways` table에서 Gateway의 MAC주소를 읽어와서, 해당 Gateway에 Beacon Frame을 만들어 전송하는 역할을 했다.
 해당 함수가 종료될 때, 다시 timer를 작동시켜 주기적으로 Beacon을 전송하도록 했다.
@@ -79,3 +79,53 @@ timer:send_after(BTInterval, {beacon_transmit, Trid})
 요약하자면 Beacon이 보내진 지 1초 후, 비콘 재전송과는 관계 없이 async하게 해당 파일의 `handle_info({beacon_transmit, Trid}, State)`함수가 호출되게 된다.
 해당 함수에서는 transmit를 하고 `txframes` table에서 해당 frame을 pop한다.
 data 전송은 `lorawan_handler:downlink/3`함수를 이용했다.
+
+---
+
+## Client Implementation
+
+### Previous protocol
+
+기존 코드의 크게 두 파일에서 중요한 로직을 담당하고 있다.
+먼저 `Middlewares/Third_Party/Lora/Core/lora.c`에서는 기기의 state를 관리하고,
+`Middlewares/Third_Party/Lora/Mac/LoRaMac.c`는 그 파일에서 보낸 요청을 처리한다.
+따라서 비콘을 받기 위해서 주로 두 파일을 주로 수정하였고, 이에 따라 각각 헤더 파일에 상태 관리를 위한 변수를 추가하였다.
+
+#### `Core/lora.c`
+
+현재 디바이스가 어떤 state인지 `DeviceState_t DeviceState`라는 전역 변수로 관리한다.
+`lora_fsm`이 state에 따라서 Mac에 특정한 요청을 보내게 된다.
+이는 `LoRaMacMlmeRequest`함수를 통해서 `Mac/LoRaMac.c`에서 처리된다.
+
+기존의 `lora_fsm`에서는 OTAA 조인을 할 경우, `LoRaMacMlmeRequest`에 join 요청을 보낸 후 sleep state로 가도록 되어 있다.
+여기에서 비콘 타이머를 추가하여, 10초 후 비콘을 받을 수 있도록 하였다.
+이는 기기의 패킷 충돌이 잦아 join이 늦어지거나 다시 이루어지는 경우가 많기 때문이다.
+join 후 10초간 변동이 생기지 않을 경우 비콘을 받는 것이 안정적이라고 판단했다.
+
+또한, beacon state에서는 `TxNextPacketTimer`를 5초 뒤로 연기한다.
+이는 비콘을 받아야 하는 동시에 패킷을 보내려고 시도하여 오작동을 하지 않게 하기 위함이다.
+beacon state에서 다른 타이머가 콜백을 활성화시키지 못하도록 연기하여,
+beacon listen에 가장 큰 우선순위가 주어진다.
+
+한편, downstream data 수신은 lora.c에서 이루어지지 않는데,
+이것은 패킷을 받은 뒤 MAC단에서 바로 처리하도록 했기 때문이다.
+클라이언트가 패킷을 Send한 뒤, 두 개의 윈도우를 열 때 MAC layer에서 한 번에 처리하는 것과 같이,
+Beacon 패킷을 받은 경우 타이머를 맞추어 0.5초 뒤 listen을 시작하여 데이터를 받도록 했다.
+
+#### `Mac/LoRaMac.c`
+
+`LoRaMacMlmeRequest`에서는 인자로 받은 값을 통해서 서로 다른 요청을 처리하고 있다.
+여기에서 Beacon listen을 위한 `RxBeaconChannelWithTimeout()`을 호출한다.
+이 함수에서는 frequency 및 datarate를 설정하여 기기가 패킷을 받는 listen mode에 진입하게 한다.
+한편 downstream 데이터를 받을 때에도 같은 채널을 사용하므로,
+같은 함수를 재활용하도록 하였다.
+
+`OnRadioRxDone` 함수에서는 이렇게 기기가 받은 패킷을 처리한다.
+기기가 패킷을 받으면 이 함수가 불리게 된다.
+이때 기존의 MTYPE_RFU를 MTYPE_BEACON으로 바꾸어 처리할 수 있도록 코드를 추가했다.
+Beacon 패킷인 경우, payload를 파싱하여 자신이 받을 downstream 데이터가 있는지 확인한다.
+데이터가 있는 경우, 위에서 언급한 바와 같이 타이머를 맞추어 다운스트림을 받는다.
+
+![](images/final/client.jpg)
+
+위는 비콘을 1회 받고, 데이터를 서버 측에 한 번 전송한 뒤, 비콘을 기다리고 있는 그림이다.
