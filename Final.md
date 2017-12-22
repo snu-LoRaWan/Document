@@ -62,7 +62,7 @@ Downlink data, Beacon frame 모두 921.9MHz, Datarate "SF12BW125", Coding Rate "
 timer:send_after(BInterval, beacon)
 ```
 
-`BInterval`의 값은 3000이다. 이 시간 이후 `beacon` signal이 자기 자신에게 돌아오면서, `handle_info(beacon, State)를 호출한다. 이제 그 함수에서 beacon frame을 전송하면 될 것이다.
+`BInterval`의 값은 3000이다. 이 시간 이후 `beacon` signal이 자기 자신에게 돌아오면서, `handle_info(beacon, State)`를 호출한다. 이제 그 함수에서 beacon frame을 전송하면 될 것이다.
 
 `handle_info(beacon, State)`는 erlang database인 `mnesia`의 `gateways` table에서 Gateway의 MAC주소를 읽어와서, 해당 Gateway에 Beacon Frame을 만들어 전송하는 역할을 했다.
 해당 함수가 종료될 때, 다시 timer를 작동시켜 주기적으로 Beacon을 전송하도록 했다.
@@ -79,3 +79,8 @@ timer:send_after(BTInterval, {beacon_transmit, Trid})
 요약하자면 Beacon이 보내진 지 1초 후, 비콘 재전송과는 관계 없이 async하게 해당 파일의 `handle_info({beacon_transmit, Trid}, State)`함수가 호출되게 된다.
 해당 함수에서는 transmit를 하고 `txframes` table에서 해당 frame을 pop한다.
 data 전송은 `lorawan_handler:downlink/3`함수를 이용했다.
+
+---
+
+
+## Client Implementation
